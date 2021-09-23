@@ -9,6 +9,7 @@ REPO_PATH := github.com/hashicorp/boundary
 GENERATED_CODE := $(shell  find ${THIS_DIR} -name '*.gen.go' && find ${THIS_DIR} -name '*.pb.go' && find ${THIS_DIR} -name '*.pb.gw.go')
 
 CGO_ENABLED?=0
+GO_PATH = $(shell go env GOPATH)
 
 export GEN_BASEPATH := $(shell pwd)
 
@@ -18,8 +19,17 @@ api:
 cli:
 	$(MAKE) --environment-overrides -C internal/cmd/gencli cli
 
-tools:
+tools: golangci-lint
 	go generate -tags tools tools/tools.go
+
+# golangci-lint recommends installing the binary directly, instead of using go get
+# See the note: https://golangci-lint.run/usage/install/#install-from-source
+golangci-lint:
+	$(eval GOLINT_INSTALLED := $(shell which golangci-lint))
+
+	if [ "$(GOLINT_INSTALLED)" = "" ]; then \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GO_PATH)/bin v1.42.1; \
+	fi;
 
 cleangen:
 	@rm -f ${GENERATED_CODE}
@@ -37,6 +47,14 @@ bin: build-ui
 
 fmt:
 	gofumpt -w $$(find . -name '*.go' | grep -v pb.go | grep -v pb.gw.go)
+
+lint:
+	golangci-lint run --timeout 10m
+
+LINT_DIFF_BRANCH ?= main
+
+lint-diff:
+	golangci-lint run --timeout 10m --new-from-rev=$(LINT_DIFF_BRANCH)
 
 # Set env for all UI targets.
 UI_TARGETS := update-ui-version build-ui build-ui-ifne
@@ -221,7 +239,7 @@ docker-publish:
 	docker push $(IMAGE_TAG)
 	docker push hashicorp/boundary:latest
 
-.PHONY: api cli tools gen proto website ci-config ci-verify set-ui-version docker docker-build docker-build-dev docker-publish test-database-up test-database-down
+.PHONY: api cli lint lint-diff tools golangci-lint gen proto website ci-config ci-verify set-ui-version docker docker-build docker-build-dev docker-publish test-database-up test-database-down
 
 .NOTPARALLEL:
 
