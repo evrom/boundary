@@ -119,7 +119,7 @@ func Open(dbType DbType, connectionUrl string, opt ...Option) (*DB, error) {
 		}
 		underlyingDB, err := db.DB()
 		if err != nil {
-			return nil, fmt.Errorf("unable retreive db: %w", err)
+			return nil, fmt.Errorf("unable retrieve db: %w", err)
 		}
 		underlyingDB.SetMaxOpenConns(opts.withMaxOpenConnections)
 	}
