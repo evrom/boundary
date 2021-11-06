@@ -17,7 +17,7 @@ const (
 
 var privateNets atomic.Value
 
-// ClientIpFromRequest will determine if the client ID of the http request using
+// ClientIpFromRequest will determine if the client IP of the http request using
 // the provide set of private networks. See InitPrivateNetworks(...) and
 // PrivateNetworks(...) for building the list of private networks.
 func ClientIpFromRequest(ctx context.Context, privateNetworks []*net.IPNet, r *http.Request) (string, error) {

@@ -52,7 +52,7 @@ type HandlerProperties struct {
 
 // Handler returns an http.Handler for the services. This can be used on
 // its own to mount the Controller API within another web server.
-func (c *Controller) handler(ctx context.Context, props HandlerProperties) (http.Handler, error) {
+func (c *Controller) handler(props HandlerProperties) (http.Handler, error) {
 	// Create the muxer to handle the actual endpoints
 	mux := http.NewServeMux()
 
@@ -62,10 +62,6 @@ func (c *Controller) handler(ctx context.Context, props HandlerProperties) (http
 	}
 	mux.Handle("/v1/", h)
 	mux.Handle("/", handleUi(c))
-
-	if err := common.InitPrivateNetworks(ctx, common.PrivateCidrBlocks()); err != nil {
-		return nil, err
-	}
 
 	corsWrappedHandler := wrapHandlerWithCors(mux, props)
 	commonWrappedHandler := wrapHandlerWithCommonFuncs(corsWrappedHandler, c, props)
