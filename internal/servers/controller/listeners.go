@@ -31,7 +31,7 @@ func (c *Controller) startListeners(ctx context.Context) error {
 		}
 		c.gatewayMux = newGatewayMux()
 
-		handler, err := c.handler(HandlerProperties{
+		handler, err := c.handler(ctx, HandlerProperties{
 			ListenerConfig: ln.Config,
 			CancelCtx:      c.baseContext,
 		})

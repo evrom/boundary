@@ -52,7 +52,7 @@ type HandlerProperties struct {
 
 // Handler returns an http.Handler for the services. This can be used on
 // its own to mount the Controller API within another web server.
-func (c *Controller) handler(props HandlerProperties) (http.Handler, error) {
+func (c *Controller) handler(ctx context.Context, props HandlerProperties) (http.Handler, error) {
 	// Create the muxer to handle the actual endpoints
 	mux := http.NewServeMux()
 
@@ -62,6 +62,10 @@ func (c *Controller) handler(props HandlerProperties) (http.Handler, error) {
 	}
 	mux.Handle("/v1/", h)
 	mux.Handle("/", handleUi(c))
+
+	if err := common.InitPrivateNetworks(ctx, common.PrivateCidrBlocks()); err != nil {
+		return nil, err
+	}
 
 	corsWrappedHandler := wrapHandlerWithCors(mux, props)
 	commonWrappedHandler := wrapHandlerWithCommonFuncs(corsWrappedHandler, c, props)
@@ -291,6 +295,7 @@ func wrapHandlerWithCommonFuncs(h http.Handler, c *Controller, props HandlerProp
 			// piggyback some eventing fields with the auth info proto message
 			requestInfo.EventId = info.EventId
 			requestInfo.TraceId = info.Id
+			requestInfo.ClientIp = info.ClientIp
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			event.WriteError(ctx, op, errors.New("unable to read event request info from context"))
